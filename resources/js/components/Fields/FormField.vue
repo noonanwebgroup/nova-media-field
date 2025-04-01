@@ -1,6 +1,6 @@
 <template>
     <DefaultField
-        :field="field"
+        :field="currentField"
         :errors="errors"
         :show-help-text="showHelpText"
         :full-width-content="fullWidthContent"
@@ -9,31 +9,31 @@
             <div class="nova-media-field">
                 <div class="grid gap-4">
                     <DropZone
-                        v-if="!field.readonly"
-                        :attribute="field.attribute"
-                        :multiple="field.multiple"
-                        :disabled="field.readonly"
-                        :accepted-types="field.acceptedTypes"
-                        :dusk="`${field.attribute}-delete-link`"
-                        :file-manager="field?.fileManager || false"
+                        v-if="!currentField.readonly"
+                        :attribute="currentField.attribute"
+                        :multiple="currentField.multiple"
+                        :disabled="currentField.readonly"
+                        :accepted-types="currentField.acceptedTypes"
+                        :dusk="`${currentField.attribute}-delete-link`"
+                        :file-manager="currentField?.fileManager || false"
                         @fileChanged="handleFileChange"
                         @openFileManager="fileManagerState = true"
                     />
 
                     <Gallery
-                        :value="field.value"
-                        :field="field"
-                        :multiple="field.multiple"
-                        :readonly="field.readonly"
+                        :value="currentField.value"
+                        :field="currentField"
+                        :multiple="currentField.multiple"
+                        :readonly="currentField.readonly"
                         :errors="errors"
-                        @input="field.value = $event"
+                        @input="currentField.value = $event"
                     />
                 </div>
             </div>
 
-            <Teleport to="body" v-if="field?.fileManager || false">
+            <Teleport to="body" v-if="currentField?.fileManager || false">
                 <BrowserModal
-                    :multiple="field.multiple"
+                    :multiple="currentField.multiple"
                     :selecting="true"
                     v-model:state="fileManagerState"
                     @confirmSelection="confirmSelection"
@@ -44,14 +44,14 @@
 </template>
 
 <script>
-import { FormField, HandlesValidationErrors } from "laravel-nova";
+import { DependentFormField, HandlesValidationErrors } from "laravel-nova";
 import uniqid from "uniqid";
 import { serialize } from "object-to-formdata";
 import DropZone from "../DropZone.vue";
 import { BrowserModal } from "@vendor/stepanenko3/nova-filemanager/dist/js/package.js";
 
 export default {
-    mixins: [FormField, HandlesValidationErrors],
+    mixins: [DependentFormField, HandlesValidationErrors],
 
     props: ["resourceName", "resourceId", "field"],
 
@@ -72,8 +72,8 @@ export default {
     methods: {
         confirmSelection(files) {
             const orderStart =
-                this.field.value.length > 0
-                    ? Math.max(...this.field.value.map((o) => o.order_column))
+                this.currentField.value.length > 0
+                    ? Math.max(...this.currentField.value.map((o) => o.order_column))
                     : 0;
 
             const filesForUpload = files.map(async (file) => {
@@ -103,10 +103,10 @@ export default {
                     ),
                 };
 
-                if (this.field.multiple) {
-                    this.field.value.push(filePayload);
+                if (this.currentField.multiple) {
+                    this.currentField.value.push(filePayload);
                 } else {
-                    this.field.value = [filePayload];
+                    this.currentField.value = [filePayload];
                 }
             });
 
@@ -116,8 +116,8 @@ export default {
         handleFileChange(newFiles) {
             const files = Array.from(newFiles);
             const orderStart =
-                this.field.value.length > 0
-                    ? Math.max(...this.field.value.map((o) => o.order_column))
+                this.currentField.value.length > 0
+                    ? Math.max(...this.currentField.value.map((o) => o.order_column))
                     : 0;
 
             files.forEach(async (file, index) => {
@@ -140,16 +140,16 @@ export default {
                     file: file,
                 };
 
-                if (this.field.multiple) {
-                    this.field.value.push(filePayload);
+                if (this.currentField.multiple) {
+                    this.currentField.value.push(filePayload);
                 } else {
-                    this.field.value = [filePayload];
+                    this.currentField.value = [filePayload];
                 }
             });
         },
 
         getCustomProperties(file) {
-            return (this.field.customPropertiesFields || []).reduce(
+            return (this.currentField.customPropertiesFields || []).reduce(
                 (properties, { attribute: property }) => {
                     const value = file?.custom_properties
                         ? file.custom_properties[property]
@@ -168,7 +168,7 @@ export default {
         fill(formData) {
             const data = {};
 
-            this.field.value.forEach((file) => {
+            this.currentField.value.forEach((file) => {
                 const request = {
                     id: file.id,
                     order: file.order_column,
@@ -183,7 +183,7 @@ export default {
             });
 
             this.originalValue.forEach((originalFile) => {
-                const index = this.field.value.findIndex(
+                const index = this.currentField.value.findIndex(
                     (file) =>
                         originalFile.id === file.id && !file?.markForUpload
                 );
@@ -200,7 +200,7 @@ export default {
 
             serialize(
                 {
-                    [`${this.field.attribute}`]: data,
+                    [`${this.currentField.attribute}`]: data,
                 },
                 {},
                 formData

@@ -10,9 +10,9 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
-        "laravel/nova": "^4.22",
+        "laravel/nova": "^5.0",
         "spatie/laravel-medialibrary": "^11.4",
-        "stepanenko3/nova-filemanager": "^7.1.1"
+        "stepanenko3/nova-filemanager": "*"
     },
     "autoload": {
         "psr-4": {
@@ -35,6 +35,10 @@
         {
             "type": "composer",
             "url": "https://laravelsatis.com"
+        },
+        {
+            "type": "path",
+            "url": "../nova-filemanager"
         }
     ],
     "require-dev": {
